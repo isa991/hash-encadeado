@@ -1,0 +1,140 @@
+import java.util.Random;
+
+class FilaDePrioridade {
+    class No {
+        int dado;
+        No proximo;
+
+        No(int elemento) {
+            this.dado = elemento;
+            this.proximo = null;
+        }
+    }
+
+    No inicio = null;
+    int tamanho = 0; // quantidade de elementos
+
+    // inserção ordenada crescente (aceita valores repetidos)
+    public void insereOrdenado(int elemento) {
+        No novoNo = new No(elemento);
+        if (inicio == null) {
+            inicio = novoNo;
+        } else if (elemento < inicio.dado) {
+            novoNo.proximo = inicio;
+            inicio = novoNo;
+        } else {
+            No atual = inicio;
+            while (atual.proximo != null && atual.proximo.dado <= elemento) {
+                atual = atual.proximo;
+            }
+            novoNo.proximo = atual.proximo;
+            atual.proximo = novoNo;
+        }
+        tamanho++;
+    }
+
+    public void removeElemento(int elemento) {
+        if (inicio == null) {
+            System.out.println("A lista está vazia.\nNão é possível remover um elemento");
+        } else if (elemento == inicio.dado) {
+            inicio = inicio.proximo;
+            tamanho--;
+        } else {
+            No atual = inicio;
+            boolean removido = false;
+            while (atual.proximo != null && !removido) {
+                if (atual.proximo.dado == elemento) {
+                    atual.proximo = atual.proximo.proximo;
+                    tamanho--;
+                    removido = true;
+                } else {
+                    atual = atual.proximo;
+                }
+            }
+            if (!removido) {
+                System.out.println("O elemento não faz parte da lista.\nNão é possível remover.");
+            }
+        }
+    }
+
+    public void exibeLista() {
+        No atual = inicio;
+        System.out.print("Lista: ");
+        while (atual != null) {
+            System.out.print(atual.dado + " ");
+            atual = atual.proximo;
+        }
+        System.out.println();
+    }
+}
+
+public class TabelaHash {
+    private int tamanho = 100;
+    private int qtdElementos = 1000;
+
+    private FilaDePrioridade[] tabela;
+    private int[] ultimosTres = new int[3];
+    private int totalColisoes = 0;
+
+    public static void main(String[] args) {
+        TabelaHash hash = new TabelaHash();
+        hash.executar();
+    }
+
+    private void executar() {
+        tabela = new FilaDePrioridade[tamanho];
+        for (int i = 0; i < tamanho; i++) {
+            tabela[i] = new FilaDePrioridade();
+        }
+
+        Random random = new Random(1090);
+
+        // inserção
+        for (int i = 0; i < qtdElementos; i++) {
+            int valor = random.nextInt(100000); // 0 a 99999
+            int pos = valor % tamanho;
+
+            boolean colisao = tabela[pos].inicio != null; // verificado ANTES de inserir
+            tabela[pos].insereOrdenado(valor);
+
+            if (colisao) {
+                ultimosTres[0] = ultimosTres[1];
+                ultimosTres[1] = ultimosTres[2];
+                ultimosTres[2] = valor;
+                totalColisoes++;
+            }
+        }
+
+        // análise
+        int maiorPos = 0;
+        int listasGeradas = 0;
+        int posicoesVazias = 0;
+
+        for (int i = 0; i < tamanho; i++) {
+            if (tabela[i].tamanho == 0) {
+                posicoesVazias++;
+            } else if (tabela[i].tamanho > 1) {
+                listasGeradas++;
+            }
+            if (tabela[i].tamanho > tabela[maiorPos].tamanho) {
+                maiorPos = i;
+            }
+        }
+
+        // resultados
+        System.out.println("Maior lista encadeada (posição " + maiorPos + ", " + tabela[maiorPos].tamanho + " elementos):");
+        tabela[maiorPos].exibeLista();
+
+        System.out.println("Listas encadeadas geradas: " + listasGeradas);
+        System.out.println("Posições vazias: " + posicoesVazias);
+
+        System.out.println("Três últimos valores inseridos em listas encadeadas:");
+        int inicio = 0;
+        if (totalColisoes < 3) {
+            inicio = 3 - totalColisoes;
+        }
+        for (int i = inicio; i < 3; i++) {
+            System.out.println("  " + ultimosTres[i]);
+        }
+    }
+}
